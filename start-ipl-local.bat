@@ -24,6 +24,15 @@ if errorlevel 1 (
 )
 for /f "tokens=1" %%v in ('node -v') do echo [OK] Node.js %%v
 
+REM --- Check npm ---
+where npm >nul 2>&1
+if errorlevel 1 (
+  echo [ERROR] npm not found. Reinstall Node.js LTS from https://nodejs.org/
+  pause
+  exit /b 1
+)
+for /f "tokens=1" %%v in ('npm -v') do echo [OK] npm %%v
+
 REM --- Check Python ---
 set "HAS_PY="
 where py >nul 2>&1 && set "HAS_PY=1"
@@ -51,9 +60,11 @@ if not exist "%ROOT%\backend\.env" (
     copy /Y "%ROOT%\backend\.env.example" "%ROOT%\backend\.env" >nul
     echo [OK] Created backend\.env from .env.example
   ) else (
-    echo PORT=3001> "%ROOT%\backend\.env"
-    echo CRICAPI_API_KEY=>> "%ROOT%\backend\.env"
-    echo IPL_SERIES_ID=87c62aac-bc3c-4738-ab93-19da0690488f>> "%ROOT%\backend\.env"
+    (
+      echo PORT=3001
+      echo CRICAPI_API_KEY=
+      echo IPL_SERIES_ID=87c62aac-bc3c-4738-ab93-19da0690488f
+    ) > "%ROOT%\backend\.env"
     echo [OK] Created backend\.env with defaults
   )
 )
@@ -80,7 +91,7 @@ if not defined SKIP_INSTALL (
   echo   [1/3] Installing backend dependencies...
   echo ============================================
   pushd "%ROOT%\backend"
-  call npm install --prefer-offline 2>nul || call npm install
+  call npm install
   if errorlevel 1 (
     popd
     echo [ERROR] Backend npm install failed.
@@ -88,13 +99,14 @@ if not defined SKIP_INSTALL (
     exit /b 1
   )
   popd
+  echo [OK] Backend dependencies installed.
   echo.
 
   echo ============================================
   echo   [2/3] Installing frontend dependencies...
   echo ============================================
   pushd "%ROOT%\frontend"
-  call npm install --prefer-offline 2>nul || call npm install
+  call npm install
   if errorlevel 1 (
     popd
     echo [ERROR] Frontend npm install failed.
@@ -102,8 +114,38 @@ if not defined SKIP_INSTALL (
     exit /b 1
   )
   popd
+  echo [OK] Frontend dependencies installed.
   echo.
 )
+
+REM --- Verify node_modules exist ---
+if not exist "%ROOT%\backend\node_modules" (
+  echo [ERROR] backend\node_modules missing. Run without "noinstall" first.
+  pause
+  exit /b 1
+)
+if not exist "%ROOT%\frontend\node_modules" (
+  echo [ERROR] frontend\node_modules missing. Run without "noinstall" first.
+  pause
+  exit /b 1
+)
+
+REM --- Verify next binary exists ---
+if not exist "%ROOT%\frontend\node_modules\.bin\next.cmd" (
+  if not exist "%ROOT%\frontend\node_modules\.bin\next" (
+    echo [ERROR] Next.js binary not found. Re-running npm install for frontend...
+    pushd "%ROOT%\frontend"
+    call npm install
+    popd
+    if not exist "%ROOT%\frontend\node_modules\.bin\next.cmd" (
+      echo [ERROR] Still missing. Delete frontend\node_modules and run again.
+      pause
+      exit /b 1
+    )
+  )
+)
+echo [OK] All node_modules verified.
+echo.
 
 REM --- ML service venv setup ---
 if not defined SKIP_ML (
@@ -169,6 +211,53 @@ if not defined SKIP_ML (
   )
 )
 
+REM --- Create launcher helper scripts so windows stay open on crash ---
+echo @echo off> "%ROOT%\backend\_run.cmd"
+echo title IPL Backend :3001>> "%ROOT%\backend\_run.cmd"
+echo cd /d "%ROOT%\backend">> "%ROOT%\backend\_run.cmd"
+echo echo.>> "%ROOT%\backend\_run.cmd"
+echo echo ==========================================>> "%ROOT%\backend\_run.cmd"
+echo echo   IPL Backend starting on port 3001...>> "%ROOT%\backend\_run.cmd"
+echo echo ==========================================>> "%ROOT%\backend\_run.cmd"
+echo echo.>> "%ROOT%\backend\_run.cmd"
+echo call npm run dev>> "%ROOT%\backend\_run.cmd"
+echo echo.>> "%ROOT%\backend\_run.cmd"
+echo echo [ERROR] Backend stopped unexpectedly.>> "%ROOT%\backend\_run.cmd"
+echo echo         Check the error above.>> "%ROOT%\backend\_run.cmd"
+echo pause>> "%ROOT%\backend\_run.cmd"
+
+echo @echo off> "%ROOT%\frontend\_run.cmd"
+echo title IPL Frontend :3000>> "%ROOT%\frontend\_run.cmd"
+echo cd /d "%ROOT%\frontend">> "%ROOT%\frontend\_run.cmd"
+echo echo.>> "%ROOT%\frontend\_run.cmd"
+echo echo ==========================================>> "%ROOT%\frontend\_run.cmd"
+echo echo   IPL Frontend starting on port 3000...>> "%ROOT%\frontend\_run.cmd"
+echo echo   (Next.js takes ~10-15s to compile)>> "%ROOT%\frontend\_run.cmd"
+echo echo ==========================================>> "%ROOT%\frontend\_run.cmd"
+echo echo.>> "%ROOT%\frontend\_run.cmd"
+echo call npm run dev>> "%ROOT%\frontend\_run.cmd"
+echo echo.>> "%ROOT%\frontend\_run.cmd"
+echo echo [ERROR] Frontend stopped unexpectedly.>> "%ROOT%\frontend\_run.cmd"
+echo echo         Check the error above.>> "%ROOT%\frontend\_run.cmd"
+echo pause>> "%ROOT%\frontend\_run.cmd"
+
+if not defined SKIP_ML (
+  echo @echo off> "%ROOT%\ml-service\_run.cmd"
+  echo title IPL ML Service :8000>> "%ROOT%\ml-service\_run.cmd"
+  echo cd /d "%ROOT%\ml-service">> "%ROOT%\ml-service\_run.cmd"
+  echo echo.>> "%ROOT%\ml-service\_run.cmd"
+  echo echo ==========================================>> "%ROOT%\ml-service\_run.cmd"
+  echo echo   IPL ML Service starting on port 8000...>> "%ROOT%\ml-service\_run.cmd"
+  echo echo ==========================================>> "%ROOT%\ml-service\_run.cmd"
+  echo echo.>> "%ROOT%\ml-service\_run.cmd"
+  echo call .venv\Scripts\activate.bat>> "%ROOT%\ml-service\_run.cmd"
+  echo uvicorn api.main:app --host 127.0.0.1 --port 8000>> "%ROOT%\ml-service\_run.cmd"
+  echo echo.>> "%ROOT%\ml-service\_run.cmd"
+  echo echo [ERROR] ML service stopped unexpectedly.>> "%ROOT%\ml-service\_run.cmd"
+  echo echo         Check the error above.>> "%ROOT%\ml-service\_run.cmd"
+  echo pause>> "%ROOT%\ml-service\_run.cmd"
+)
+
 REM --- Start services ---
 echo =========================================================
 echo   Starting services...
@@ -176,26 +265,26 @@ echo =========================================================
 echo.
 
 if not defined SKIP_ML (
-  echo   [ML API]     http://127.0.0.1:8000  ^(health: /health^)
-  start "IPL ML :8000" /D "%ROOT%\ml-service" cmd /k "title IPL ML Service && call .venv\Scripts\activate.bat && uvicorn api.main:app --host 127.0.0.1 --port 8000"
+  echo   [ML API]     http://127.0.0.1:8000
+  start "IPL ML :8000" cmd /c "%ROOT%\ml-service\_run.cmd"
   timeout /t 3 /nobreak >nul
 ) else (
   echo   [ML API]     SKIPPED ^(no Python or venv failed^)
 )
 
 echo   [Backend]    http://127.0.0.1:3001
-start "IPL Backend :3001" /D "%ROOT%\backend" cmd /k "title IPL Backend && npm run dev"
-timeout /t 3 /nobreak >nul
+start "IPL Backend :3001" cmd /c "%ROOT%\backend\_run.cmd"
+timeout /t 4 /nobreak >nul
 
 echo   [Frontend]   http://127.0.0.1:3000
-start "IPL Frontend :3000" /D "%ROOT%\frontend" cmd /k "title IPL Frontend && npm run dev"
+start "IPL Frontend :3000" cmd /c "%ROOT%\frontend\_run.cmd"
 
 echo.
 echo =========================================================
 echo   All services starting...
-echo   Waiting ~12s for Next.js to compile, then opening browser.
+echo   Waiting ~15s for Next.js to compile, then opening browser.
 echo =========================================================
-timeout /t 12 /nobreak >nul
+timeout /t 15 /nobreak >nul
 start "" "http://127.0.0.1:3000"
 
 echo.
@@ -203,7 +292,9 @@ echo =========================================================
 echo   IPL 2026 is running!
 echo.
 echo   Leave the titled windows open for your RDP session.
-echo   Each service runs in its own window (close with Ctrl+C).
+echo   Each service runs in its own window.
+echo   If a service crashes, the window will stay open
+echo   showing the error message.
 echo.
 echo   TIP: Next time run  start-ipl-local.bat noinstall
 echo        to skip installs and start faster.
