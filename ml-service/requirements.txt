@@ -1,3 +1,4 @@
+# Python 3.11–3.13 recommended. On 3.14, pydantic-core may fail to build (PyO3).
 fastapi==0.117.1
 uvicorn==0.37.0
 pydantic==2.11.9

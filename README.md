@@ -130,7 +130,7 @@ C:\IPL
 
 - Node.js 20+
 - npm 10+
-- Python 3.11+ (3.12 recommended)
+- Python **3.11–3.13** for `ml-service` (3.12 recommended). **Python 3.14** is not supported yet — `pydantic-core` cannot install cleanly.
 
 ### A. Start Frontend
 
@@ -265,4 +265,5 @@ curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" -
 - If port 3000/3001/8000 is busy, stop existing process or change port values
 - If Tailwind styles do not refresh, restart `npm run dev`
 - If Python imports fail in ML service, ensure venv is activated
+- If `pydantic-core` fails to build on Windows, you are likely on **Python 3.14**: delete `ml-service\.venv`, install Python **3.12** or **3.13**, then run `start-ipl-local.bat` again (it picks 3.12 → 3.13 → 3.11 automatically)
 - If Docker build fails on cached layers, run `docker builder prune` and rebuild

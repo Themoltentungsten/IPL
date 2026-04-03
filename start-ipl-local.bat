@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
 set "ROOT=%CD%"
 
@@ -77,20 +77,42 @@ if not defined SKIP_INSTALL (
 
 if defined NEED_VENV (
   echo [3/3] Python venv + pip — ml-service ...
+  echo       ^(needs Python 3.11–3.13 — 3.14 breaks pydantic-core builds^)
+  REM --- Drop venv if it was made with Python 3.14+ (PyO3 / wheels not ready) ---
+  if exist "%ROOT%\ml-service\.venv\Scripts\python.exe" (
+    "%ROOT%\ml-service\.venv\Scripts\python.exe" -c "import sys; v=sys.version_info[:2]; raise SystemExit(0 if (3,11)<=v<=(3,13) else 1)" 2>nul
+    if errorlevel 1 (
+      echo       Removing incompatible venv ^(Python 3.14+^) ...
+      rd /s /q "%ROOT%\ml-service\.venv" 2>nul
+    )
+  )
   if not exist "%ROOT%\ml-service\.venv\Scripts\python.exe" (
-    echo       Creating ml-service\.venv ...
-    py -3 -m venv "%ROOT%\ml-service\.venv" 2>nul
-    if errorlevel 1 python -m venv "%ROOT%\ml-service\.venv"
-    if not exist "%ROOT%\ml-service\.venv\Scripts\python.exe" (
-      echo [ERROR] Could not create Python venv in ml-service\.venv
+    echo       Creating ml-service\.venv with Python 3.12, 3.13, or 3.11 ...
+    set "VENV_MADE="
+    py -3.12 -m venv "%ROOT%\ml-service\.venv" 2>nul
+    if exist "%ROOT%\ml-service\.venv\Scripts\python.exe" set "VENV_MADE=1"
+    if not defined VENV_MADE (
+      rd /s /q "%ROOT%\ml-service\.venv" 2>nul
+      py -3.13 -m venv "%ROOT%\ml-service\.venv" 2>nul
+      if exist "%ROOT%\ml-service\.venv\Scripts\python.exe" set "VENV_MADE=1"
+    )
+    if not defined VENV_MADE (
+      rd /s /q "%ROOT%\ml-service\.venv" 2>nul
+      py -3.11 -m venv "%ROOT%\ml-service\.venv" 2>nul
+      if exist "%ROOT%\ml-service\.venv\Scripts\python.exe" set "VENV_MADE=1"
+    )
+    if not defined VENV_MADE (
+      echo [ERROR] Install Python 3.12 or 3.13 from https://www.python.org/downloads/
+      echo         ^(enable "py launcher" and "Add to PATH"^). Python 3.14 cannot run ml-service yet.
       pause
       exit /b 1
     )
   )
   pushd "%ROOT%\ml-service"
   call .venv\Scripts\activate.bat
+  python -m pip install -q --upgrade pip
   python -m pip install -q -r requirements.txt
-  if errorlevel 1 popd & echo [ERROR] pip install failed. & pause & exit /b 1
+  if errorlevel 1 popd & echo [ERROR] pip install failed. If you still see pydantic errors, delete ml-service\.venv and re-run. & pause & exit /b 1
   popd
   echo.
 )
