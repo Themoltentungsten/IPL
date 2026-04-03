@@ -1,0 +1,29 @@
+{
+  "teams": {
+    "MI": { "squadStrength": 84, "formWinRate": 0.67, "aliases": ["mumbai indians", "mumbai"] },
+    "CSK": { "squadStrength": 83, "formWinRate": 0.58, "aliases": ["chennai super kings", "chennai"] },
+    "RCB": { "squadStrength": 80, "formWinRate": 0.55, "aliases": ["royal challengers", "bengaluru"] },
+    "KKR": { "squadStrength": 81, "formWinRate": 0.62, "aliases": ["kolkata", "knight riders"] },
+    "DC": { "squadStrength": 78, "formWinRate": 0.42, "aliases": ["delhi capitals", "delhi"] },
+    "PBKS": { "squadStrength": 76, "formWinRate": 0.38, "aliases": ["punjab", "punjab kings"] },
+    "RR": { "squadStrength": 86, "formWinRate": 0.72, "aliases": ["rajasthan", "rajasthan royals"] },
+    "SRH": { "squadStrength": 82, "formWinRate": 0.52, "aliases": ["sunrisers", "hyderabad"] },
+    "GT": { "squadStrength": 85, "formWinRate": 0.55, "aliases": ["gujarat titans", "gujarat"] },
+    "LSG": { "squadStrength": 79, "formWinRate": 0.48, "aliases": ["lucknow", "super giants"] }
+  },
+  "venues": {
+    "default": { "chaseWinRate": 0.52, "battingFriendly": 0.56, "avgFirstInnings": 168 },
+    "wankhede": { "chaseWinRate": 0.58, "battingFriendly": 0.62, "avgFirstInnings": 175 },
+    "chinnaswamy": { "chaseWinRate": 0.62, "battingFriendly": 0.68, "avgFirstInnings": 182 },
+    "eden": { "chaseWinRate": 0.50, "battingFriendly": 0.55, "avgFirstInnings": 168 },
+    "chepauk": { "chaseWinRate": 0.45, "battingFriendly": 0.48, "avgFirstInnings": 162 },
+    "motera": { "chaseWinRate": 0.53, "battingFriendly": 0.57, "avgFirstInnings": 172 },
+    "dubai": { "chaseWinRate": 0.55, "battingFriendly": 0.58, "avgFirstInnings": 160 }
+  },
+  "h2hEdge": {
+    "MI|CSK": 2.5,
+    "CSK|MI": -2.5,
+    "RCB|KKR": 1.0,
+    "KKR|RCB": -1.0
+  }
+}

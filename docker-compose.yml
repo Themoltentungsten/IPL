@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Browser on your machine calls the published backend port (not the Docker service name).
+        NEXT_PUBLIC_BACKEND_URL: http://127.0.0.1:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      ML_SERVICE_URL: http://ml-service:8000
+      CRICAPI_API_KEY: ${CRICAPI_API_KEY:-}
+      CRICAPI_POLL_MS: ${CRICAPI_POLL_MS:-15000}
+      IPL_ONLY_FILTER: ${IPL_ONLY_FILTER:-true}
+    depends_on:
+      - ml-service
+
+  ml-service:
+    build:
+      context: ./ml-service
+    ports:
+      - "8000:8000"
