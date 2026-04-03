@@ -1,60 +1,45 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Brain, Dices, MapPin, TrendingUp, Shield, Activity } from "lucide-react";
 import { SectionCard } from "@/components/shared/section-card";
-import { WinProbabilityCard } from "@/components/prediction/win-probability-card";
 import { WhatIfSimulator } from "@/components/prediction/what-if-simulator";
-import { winTimeline } from "@/lib/mock-data";
 
 export const metadata: Metadata = { title: "Predictions" };
 
-const impactFactors = [
-  { factor: "MI's home venue record at Wankhede (78% win rate)", impact: "+12%", direction: "positive" as const },
-  { factor: "Rohit Sharma in top form (avg 60 in last 5)", impact: "+8%", direction: "positive" as const },
-  { factor: "CSK death bowling weakness (economy 11.2 in ov 16-20)", impact: "+5%", direction: "positive" as const },
-  { factor: "CSK missing key pacer (Pathirana doubtful)", impact: "+3%", direction: "positive" as const },
-  { factor: "CSK strong chasing record in IPL 2026", impact: "-4%", direction: "negative" as const },
-  { factor: "Jadeja's spin effective mid-overs (econ 7.6)", impact: "-3%", direction: "negative" as const },
-];
-
 export default function PredictionsPage() {
   return (
-    <div className="space-y-4">
-      <WinProbabilityCard />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 p-8"
+        style={{ background: "linear-gradient(135deg, #0d1b3e, #1a237e 50%, #4a148c)" }}
+      >
+        <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-amber-500/5 blur-3xl" />
+        <Brain className="mb-3 text-amber-400" size={36} />
+        <h1 className="text-2xl font-black text-white md:text-3xl">AI <span className="text-gradient-gold">Win Probability</span></h1>
+        <p className="mt-2 text-sm text-slate-300">
+          Multi-factor prediction engine analyzing toss, venue, squad strength, current form, and live match state.
+          Visit the <Link href="/live" className="font-semibold text-amber-300 underline hover:text-amber-200">Live Match Center</Link> for real-time predictions.
+        </p>
+      </div>
 
-      <SectionCard title="Model Confidence & Accuracy" subtitle="Ensemble model performance metrics">
+      {/* Factors grid */}
+      <SectionCard title="Prediction Factors" subtitle="What drives the AI model" variant="gold">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <FactorDetail icon={<Dices size={20} />} title="Toss Analysis" desc="Historical toss decision impact on match outcome at each venue" color="from-blue-500/10 to-blue-600/5" iconColor="text-blue-400" />
+          <FactorDetail icon={<MapPin size={20} />} title="Venue & Pitch" desc="Ground dimensions, pitch behavior, avg scores, and pace vs spin advantage" color="from-emerald-500/10 to-emerald-600/5" iconColor="text-emerald-400" />
+          <FactorDetail icon={<TrendingUp size={20} />} title="Current Form" desc="Recent performance trend, batting/bowling consistency index" color="from-amber-500/10 to-amber-600/5" iconColor="text-amber-400" />
+          <FactorDetail icon={<Shield size={20} />} title="Squad Strength" desc="Playing XI analysis, key player availability, matchup matrix" color="from-violet-500/10 to-violet-600/5" iconColor="text-violet-400" />
+          <FactorDetail icon={<Activity size={20} />} title="Live State" desc="Current RRR/CRR ratio, wickets in hand, required run rate pressure" color="from-red-500/10 to-red-600/5" iconColor="text-red-400" />
+          <FactorDetail icon={<Brain size={20} />} title="ML Ensemble" desc="Combined model with epistemic uncertainty bands and confidence intervals" color="from-pink-500/10 to-pink-600/5" iconColor="text-pink-400" />
+        </div>
+      </SectionCard>
+
+      {/* Model info */}
+      <SectionCard title="Model Specifications" subtitle="Technical details">
         <div className="grid gap-3 sm:grid-cols-3">
-          <MetricCard label="Current Confidence" value="84%" />
-          <MetricCard label="Historical Accuracy" value="78.5%" />
-          <MetricCard label="Data Points Analyzed" value="47,832" />
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Key Factor Analysis" subtitle="What is driving the prediction">
-        <div className="space-y-2">
-          {impactFactors.map((f) => (
-            <div key={f.factor} className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/50 p-3">
-              <p className="text-sm text-slate-300">{f.factor}</p>
-              <span className={`text-sm font-bold ${f.direction === "positive" ? "text-emerald-300" : "text-rose-300"}`}>
-                {f.impact}
-              </span>
-            </div>
-          ))}
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Prediction Timeline" subtitle="Win probability shift over-by-over">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          {winTimeline.map((point) => (
-            <div key={point.over} className="rounded-lg border border-slate-800 bg-slate-950/40 p-3 text-sm">
-              <p className="font-semibold text-slate-100">Over {point.over}</p>
-              <div className="mt-1 flex justify-between">
-                <span className="text-blue-300">MI {point.mi}%</span>
-                <span className="text-amber-300">CSK {point.csk}%</span>
-              </div>
-              <div className="mt-1 h-1.5 rounded-full bg-amber-400/30">
-                <div className="h-1.5 rounded-full bg-blue-400" style={{ width: `${point.mi}%` }} />
-              </div>
-            </div>
-          ))}
+          <InfoCard label="Update Cadence" value="Every 15 seconds" />
+          <InfoCard label="Uncertainty Band" value="±4.5–14% epistemic" />
+          <InfoCard label="Data Source" value="CricAPI real-time feed" />
         </div>
       </SectionCard>
 
@@ -63,11 +48,21 @@ export default function PredictionsPage() {
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function FactorDetail({ icon, title, desc, color, iconColor }: { icon: React.ReactNode; title: string; desc: string; color: string; iconColor: string }) {
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-center">
-      <p className="text-2xl font-bold text-amber-300">{value}</p>
-      <p className="mt-1 text-xs text-slate-400">{label}</p>
+    <div className={`rounded-xl bg-gradient-to-br ${color} border border-white/[0.04] p-4`}>
+      <div className={`mb-2 ${iconColor}`}>{icon}</div>
+      <p className="font-bold text-white">{title}</p>
+      <p className="mt-1 text-xs text-slate-400">{desc}</p>
+    </div>
+  );
+}
+
+function InfoCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
+      <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="mt-1 font-bold text-amber-300">{value}</p>
     </div>
   );
 }

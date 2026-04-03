@@ -1,4 +1,3 @@
-import { mockPrediction, mockTimeline } from "../data/mock-data";
 import { cricketApiService } from "./cricket-api.service";
 import { buildFullPredictionPayload } from "./prediction-context.builder";
 import { predictFull } from "./ml-client";
@@ -6,8 +5,13 @@ import { predictFull } from "./ml-client";
 export class PredictionService {
   async getPrediction(matchId: string) {
     return {
-      ...mockPrediction,
       matchId,
+      teamA: "TBD",
+      teamB: "TBD",
+      teamAProbability: 50,
+      teamBProbability: 50,
+      confidence: 0,
+      keyFactors: ["Use /predictions/full/:matchId for ML-powered predictions"],
       timestamp: new Date().toISOString(),
     };
   }
@@ -15,7 +19,7 @@ export class PredictionService {
   async getPredictionTimeline(matchId: string) {
     return {
       matchId,
-      timeline: mockTimeline,
+      timeline: [],
       generatedAt: new Date().toISOString(),
     };
   }
@@ -25,7 +29,7 @@ export class PredictionService {
     expectedRunsNext3Overs: number;
     wicketsLostNext3Overs: number;
   }) {
-    const base = mockPrediction.teamAProbability;
+    const base = 50;
     const swing = input.expectedRunsNext3Overs * 0.4 - input.wicketsLostNext3Overs * 3;
     const adjusted = Math.max(1, Math.min(99, base + swing));
 

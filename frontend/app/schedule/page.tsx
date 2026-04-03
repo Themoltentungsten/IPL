@@ -1,59 +1,88 @@
 import type { Metadata } from "next";
+import { Calendar, CheckCircle } from "lucide-react";
 import { SectionCard } from "@/components/shared/section-card";
-import { schedule } from "@/lib/mock-data";
+import { fetchUpcoming, fetchResults, type ApiScheduleMatch } from "@/lib/api";
 
 export const metadata: Metadata = { title: "Schedule & Results" };
 
-export default function SchedulePage() {
-  const upcoming = schedule.filter((m) => m.status === "Upcoming");
-  const completed = schedule.filter((m) => m.status === "Completed");
+function scoreLine(m: ApiScheduleMatch): string {
+  if (!m.score?.length) return "";
+  return m.score.map((s) => `${s.inning}: ${s.r}/${s.w} (${s.o} ov)`).join(" | ");
+}
+
+function teamNames(m: ApiScheduleMatch): [string, string] {
+  if (m.teamInfo?.length === 2) return [m.teamInfo[0].shortname, m.teamInfo[1].shortname];
+  if (m.teams?.length === 2) return [m.teams[0], m.teams[1]];
+  return ["TBD", "TBD"];
+}
+
+export default async function SchedulePage() {
+  const [upcoming, completed] = await Promise.all([fetchUpcoming(), fetchResults()]);
 
   return (
-    <div className="space-y-4">
-      <SectionCard title="Upcoming Matches" subtitle={`${upcoming.length} matches scheduled`}>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-r from-[#0d1b3e] via-[#1a237e]/60 to-[#0d1b3e] p-6">
+        <h1 className="text-2xl font-black text-white md:text-3xl">
+          <Calendar className="mr-2 inline text-amber-400" size={28} />
+          Schedule & <span className="text-gradient-gold">Results</span>
+        </h1>
+        <p className="mt-1 text-sm text-slate-400">{upcoming.length} upcoming • {completed.length} completed</p>
+      </div>
+
+      {/* Upcoming */}
+      <SectionCard title="Upcoming Matches" subtitle={`${upcoming.length} matches scheduled`} variant="highlight">
         <div className="space-y-3">
-          {upcoming.map((match) => (
-            <article key={match.id} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-semibold text-slate-100">{match.team1} vs {match.team2}</p>
-                <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-300">Upcoming</span>
-              </div>
-              <p className="mt-1 text-sm text-slate-400">{match.date} • {match.time} • {match.venue}</p>
-              {match.prediction && (
-                <div className="mt-2">
-                  <p className="mb-1 text-xs text-slate-500">AI Pre-match Prediction</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-semibold text-blue-300">{match.team1} {match.prediction.team1}%</span>
-                    <div className="h-2 flex-1 rounded-full bg-slate-700">
-                      <div className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-violet-400" style={{ width: `${match.prediction.team1}%` }} />
-                    </div>
-                    <span className="font-semibold text-amber-300">{match.prediction.team2}% {match.team2}</span>
-                  </div>
+          {upcoming.length === 0 && <p className="py-4 text-sm text-slate-400">No upcoming matches in the feed.</p>}
+          {upcoming.map((match) => {
+            const [t1, t2] = teamNames(match);
+            const t1Info = match.teamInfo?.[0];
+            const t2Info = match.teamInfo?.[1];
+            return (
+              <article key={match.id} className="flex items-center gap-4 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 transition hover:bg-white/[0.04]">
+                <div className="flex flex-1 items-center gap-3">
+                  {t1Info?.img && <img src={t1Info.img} alt={t1} width={28} height={28} className="rounded" />}
+                  <span className="font-bold text-white">{t1}</span>
+                  <span className="text-xs text-slate-500">vs</span>
+                  <span className="font-bold text-white">{t2}</span>
+                  {t2Info?.img && <img src={t2Info.img} alt={t2} width={28} height={28} className="rounded" />}
                 </div>
-              )}
-            </article>
-          ))}
+                <div className="text-right">
+                  <span className="badge-upcoming rounded-full px-2.5 py-1 text-[10px] font-bold">UPCOMING</span>
+                  <p className="mt-1 text-[10px] text-slate-500">{match.date}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </SectionCard>
 
+      {/* Results */}
       <SectionCard title="Recent Results" subtitle={`${completed.length} completed matches`}>
         <div className="space-y-3">
-          {completed.map((match) => (
-            <article key={match.id} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-semibold text-slate-100">{match.team1} vs {match.team2}</p>
-                <span className="rounded-full bg-slate-600/30 px-2 py-0.5 text-xs font-semibold text-slate-300">Completed</span>
-              </div>
-              <p className="mt-1 text-sm text-slate-400">{match.date} • {match.venue}</p>
-              {match.result && <p className="mt-1 text-sm font-semibold text-emerald-300">{match.result}</p>}
-              {match.scores && (
-                <div className="mt-1 text-xs text-slate-400">
-                  <p>{match.team1}: {match.scores.team1}</p>
-                  <p>{match.team2}: {match.scores.team2}</p>
+          {completed.length === 0 && <p className="py-4 text-sm text-slate-400">No completed matches yet.</p>}
+          {completed.map((match) => {
+            const [t1, t2] = teamNames(match);
+            const t1Info = match.teamInfo?.[0];
+            const t2Info = match.teamInfo?.[1];
+            return (
+              <article key={match.id} className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 transition hover:bg-white/[0.04]">
+                <div className="flex items-center gap-3">
+                  {t1Info?.img && <img src={t1Info.img} alt={t1} width={24} height={24} className="rounded" />}
+                  <span className="font-bold text-white">{t1}</span>
+                  <span className="text-xs text-slate-500">vs</span>
+                  <span className="font-bold text-white">{t2}</span>
+                  {t2Info?.img && <img src={t2Info.img} alt={t2} width={24} height={24} className="rounded" />}
+                  <span className="badge-completed ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold">
+                    <CheckCircle size={10} className="mr-1 inline" />DONE
+                  </span>
                 </div>
-              )}
-            </article>
-          ))}
+                <p className="mt-2 text-sm font-semibold text-emerald-300">{match.status}</p>
+                {match.score && <p className="mt-1 text-xs text-slate-400">{scoreLine(match)}</p>}
+                <p className="mt-1 text-[10px] text-slate-500">{match.venue} • {match.date}</p>
+              </article>
+            );
+          })}
         </div>
       </SectionCard>
     </div>

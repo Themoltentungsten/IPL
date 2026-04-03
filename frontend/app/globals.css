@@ -1,15 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f172a;
+  --background: #0a0e1a;
   --foreground: #f8fafc;
-  --primary-blue: #1e3a8a;
-  --primary-gold: #f59e0b;
+  --ipl-blue: #1a3a6b;
+  --ipl-blue-deep: #0d1b3e;
+  --ipl-gold: #d4a843;
+  --ipl-gold-bright: #f5c518;
+  --accent-red: #e23744;
   --accent-purple: #7c3aed;
-  --bg-card: #1e293b;
-  --bg-card-hover: #334155;
+  --bg-card: #111827;
+  --bg-card-hover: #1f2937;
   --text-secondary: #94a3b8;
-  --border-color: #334155;
+  --border-color: #1e293b;
 
   --mi-blue: #004BA0;
   --csk-yellow: #FDB913;
@@ -22,9 +25,11 @@
   --gt-navy: #1C2841;
   --lsg-teal: #00A7CC;
 
-  --gradient-primary: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
-  --gradient-gold: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.4);
+  --gradient-hero: linear-gradient(135deg, #0d1b3e 0%, #1a237e 40%, #4a148c 100%);
+  --gradient-gold: linear-gradient(90deg, #d4a843, #f5c518, #d4a843);
+  --gradient-card: linear-gradient(145deg, #111827 0%, #0f172a 100%);
+  --shadow-glow: 0 0 30px rgba(212, 168, 67, 0.15);
+  --shadow-blue: 0 0 40px rgba(26, 58, 107, 0.3);
 }
 
 @theme inline {
@@ -34,47 +39,77 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
-a,
-button {
-  transition: all 150ms ease;
+a, button {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-::-webkit-scrollbar {
-  width: 10px;
-}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #0a0e1a; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 12px; }
+::-webkit-scrollbar-thumb:hover { background: #334155; }
 
-::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 12px;
-}
-
+/* --- Ticker --- */
 @keyframes marquee {
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
 }
+.animate-marquee { animation: marquee 35s linear infinite; }
 
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
-
+/* --- Live pulse --- */
 @keyframes pulse-live {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 12px 4px rgba(239, 68, 68, 0.2); }
+}
+.animate-pulse-live { animation: pulse-live 1.5s ease-in-out infinite; }
+
+/* --- Glow effects --- */
+.glow-gold { box-shadow: 0 0 20px rgba(212, 168, 67, 0.25), inset 0 1px 0 rgba(245, 197, 24, 0.1); }
+.glow-blue { box-shadow: 0 0 20px rgba(26, 58, 107, 0.4); }
+
+/* --- Card glass --- */
+.card-glass {
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.animate-pulse-live {
-  animation: pulse-live 1.5s ease-in-out infinite;
+/* --- IPL gradient text --- */
+.text-gradient-gold {
+  background: linear-gradient(90deg, #d4a843, #f5c518, #d4a843);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- Stat bar animation --- */
+@keyframes grow-bar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.animate-bar { animation: grow-bar 0.8s ease-out forwards; transform-origin: left; }
+
+/* --- Badge styles --- */
+.badge-live { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+.badge-upcoming { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+.badge-completed { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+/* --- Qualified stripe --- */
+.qualified-row { background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%); }
+
+/* --- Table header IPL style --- */
+.ipl-table-head {
+  background: linear-gradient(90deg, #1a237e, #0d1b3e);
+  color: #d4a843;
+}
+
+/* --- Recharts overrides --- */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: #1e293b;
 }

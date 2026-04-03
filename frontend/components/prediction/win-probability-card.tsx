@@ -1,51 +1,33 @@
-import { liveMatch } from "@/lib/mock-data";
-import { SectionCard } from "@/components/shared/section-card";
+"use client";
 
-function TeamProbability({
-  team,
-  probability,
-  factors,
-}: {
-  team: string;
-  probability: number;
-  factors: string[];
-}) {
-  return (
-    <div className="rounded-xl border border-slate-700 bg-slate-950/60 p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="font-semibold text-slate-100">{team}</p>
-        <p className="text-xl font-bold text-amber-300">{probability.toFixed(1)}%</p>
-      </div>
-      <div className="mb-3 h-2 w-full rounded-full bg-slate-800">
-        <div
-          className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-violet-500"
-          style={{ width: `${probability}%` }}
-        />
-      </div>
-      <ul className="list-disc space-y-1 pl-5 text-xs text-slate-300">
-        {factors.map((factor) => (
-          <li key={factor}>{factor}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+import { SectionCard } from "@/components/shared/section-card";
+import { Brain, TrendingUp, MapPin, Dices } from "lucide-react";
 
 export function WinProbabilityCard() {
   return (
-    <SectionCard title="AI Win Probability" subtitle="Updates every over (live-ready)">
-      <div className="grid gap-3 md:grid-cols-2">
-        <TeamProbability
-          team={liveMatch.teamA.team}
-          probability={liveMatch.teamA.winProbability}
-          factors={liveMatch.teamA.keyFactors}
-        />
-        <TeamProbability
-          team={liveMatch.teamB.team}
-          probability={liveMatch.teamB.winProbability}
-          factors={liveMatch.teamB.keyFactors}
-        />
+    <SectionCard title="AI Win Probability" subtitle="Multi-factor prediction engine" variant="gold">
+      <div className="mb-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-violet-500/10 p-4">
+        <p className="text-sm text-slate-300">
+          Visit the <a href="/live" className="font-semibold text-amber-300 underline hover:text-amber-200">Live Match Center</a> to see real-time factor-based predictions
+          powered by our ML service. Predictions update every 15 seconds during live matches.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <FactorCard icon={<Dices size={18} />} label="Toss Impact" desc="Win toss advantage analysis" color="text-blue-400" />
+        <FactorCard icon={<MapPin size={18} />} label="Venue Factor" desc="Home ground & pitch conditions" color="text-emerald-400" />
+        <FactorCard icon={<TrendingUp size={18} />} label="Current Form" desc="Last 5 match performance" color="text-amber-400" />
+        <FactorCard icon={<Brain size={18} />} label="Squad Strength" desc="XI strength & matchup analysis" color="text-violet-400" />
       </div>
     </SectionCard>
+  );
+}
+
+function FactorCard({ icon, label, desc, color }: { icon: React.ReactNode; label: string; desc: string; color: string }) {
+  return (
+    <div className="rounded-xl bg-white/[0.03] p-4">
+      <div className={`mb-2 ${color}`}>{icon}</div>
+      <p className="font-semibold text-white">{label}</p>
+      <p className="mt-0.5 text-xs text-slate-400">{desc}</p>
+    </div>
   );
 }

@@ -1,5 +1,20 @@
-import { mockLiveMatch } from "../data/mock-data";
 import type { LiveMatchDto } from "../types";
+
+const fallbackPlaceholder: LiveMatchDto = {
+  id: "no-api-key",
+  title: "No API key configured",
+  venue: "—",
+  status: "Upcoming",
+  score: "Add CRICAPI_API_KEY to backend/.env for real IPL scores",
+  statusText: "Set CRICAPI_API_KEY in backend/.env",
+  crr: null,
+  rrr: null,
+  target: null,
+  toss: "—",
+  updatedAt: new Date().toISOString(),
+  source: "mock",
+  needsApiKey: true,
+};
 import { CricApiProvider } from "./cricapi.provider";
 
 export interface LiveFeedMeta {
@@ -44,7 +59,7 @@ export class CricketApiService {
 
   async refreshCache(): Promise<LiveMatchDto[]> {
     if (!this.provider) {
-      this.cache = [{ ...mockLiveMatch, updatedAt: new Date().toISOString() }];
+      this.cache = [{ ...fallbackPlaceholder, updatedAt: new Date().toISOString() }];
       this.meta.lastFetch = new Date().toISOString();
       this.meta.needsApiKey = true;
       delete this.lastError;
@@ -92,10 +107,7 @@ export class CricketApiService {
 
   async getLiveMatchById(matchId: string): Promise<LiveMatchDto | null> {
     await this.getLiveMatches();
-    let base = this.cache.find((m) => m.id === matchId);
-    if (!base && matchId === mockLiveMatch.id) {
-      base = { ...mockLiveMatch, updatedAt: new Date().toISOString() };
-    }
+    const base = this.cache.find((m) => m.id === matchId);
     if (!base) return null;
 
     if (this.provider && matchId !== "no-matches-placeholder") {

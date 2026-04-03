@@ -1,68 +1,77 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SectionCard } from "@/components/shared/section-card";
-import { players } from "@/lib/mock-data";
+import { fetchPlayerById } from "@/lib/api";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const player = players.find((p) => p.id === id);
+  const player = await fetchPlayerById(id);
   return { title: player?.name ?? "Player" };
 }
 
 export default async function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const player = players.find((entry) => entry.id === id);
+  const player = await fetchPlayerById(id);
   if (!player) notFound();
 
-  const avg = player.last5.reduce((a, b) => a + b, 0) / player.last5.length;
-  const trend = player.last5[0]! > avg ? "up" : player.last5[0]! < avg ? "down" : "stable";
-  const trendColor = trend === "up" ? "text-emerald-300" : trend === "down" ? "text-rose-300" : "text-slate-300";
-
   return (
-    <div className="space-y-4">
-      <SectionCard title={player.name} subtitle={`${player.team} • ${player.role} • ${player.nationality}`}>
-        <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-3 lg:grid-cols-4">
-          <Stat label="Matches" value={player.matches} />
-          <Stat label="Runs" value={player.runs} />
-          <Stat label="Wickets" value={player.wickets} />
-          <Stat label="Average" value={player.average} />
-          <Stat label="Strike Rate" value={player.strikeRate} />
-          <Stat label="Economy" value={player.economy || "N/A"} />
-          <Stat label="50s / 100s" value={`${player.fifties} / ${player.hundreds}`} />
-          <Stat label="Highest Score" value={player.highestScore} />
-          <Stat label="Batting" value={player.battingStyle} />
-          <Stat label="Bowling" value={player.bowlingStyle} />
+    <div className="space-y-6">
+      {/* Hero */}
+      <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-r from-[#0d1b3e] via-[#1a237e]/40 to-[#0d1b3e] p-6">
+        <h1 className="text-2xl font-black text-white md:text-3xl">{player.name}</h1>
+        <p className="mt-1 text-sm text-slate-400">{player.team} • {player.role}</p>
+      </div>
+
+      {/* Batting stats */}
+      <SectionCard title="Batting" subtitle="IPL 2026 season" variant="gold">
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <StatCard label="Matches" value={player.matches} />
+          <StatCard label="Runs" value={player.runs} highlight />
+          <StatCard label="Balls" value={player.balls} />
+          <StatCard label="Fours" value={player.fours} />
+          <StatCard label="Sixes" value={player.sixes} />
+        </div>
+        <div className="mt-3">
+          <p className="mb-1 text-xs text-slate-500">Strike Rate</p>
+          <div className="flex items-center gap-3">
+            <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="animate-bar h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300" style={{ width: `${Math.min(player.strikeRate, 200) / 2}%` }} />
+            </div>
+            <span className="text-lg font-black text-amber-300">{player.strikeRate}</span>
+          </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Recent Form" subtitle="Last 5 innings">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-2">
-            {player.last5.map((score, index) => (
-              <span
-                key={`${player.id}-${index}`}
-                className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-                  score >= 50 ? "border-amber-500/40 bg-amber-900/30 text-amber-200" : "border-slate-700 bg-slate-900 text-slate-300"
-                }`}
-              >
-                {score}
-              </span>
-            ))}
-          </div>
-          <span className={`text-sm font-semibold ${trendColor}`}>
-            {trend === "up" ? "Trending Up" : trend === "down" ? "Trending Down" : "Stable"}
-          </span>
+      {/* Bowling stats */}
+      <SectionCard title="Bowling" subtitle="IPL 2026 season" variant="highlight">
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <StatCard label="Wickets" value={player.wickets} highlight />
+          <StatCard label="Overs" value={player.overs} />
+          <StatCard label="Runs Conceded" value={player.runsConceded} />
+          <StatCard label="Economy" value={player.economy || 0} />
+          <StatCard label="Matches" value={player.matches} />
         </div>
+        {player.overs > 0 && (
+          <div className="mt-3">
+            <p className="mb-1 text-xs text-slate-500">Economy Rate</p>
+            <div className="flex items-center gap-3">
+              <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="animate-bar h-full rounded-full bg-gradient-to-r from-violet-500 to-violet-300" style={{ width: `${Math.min(player.economy, 15) / 15 * 100}%` }} />
+              </div>
+              <span className="text-lg font-black text-violet-300">{player.economy}</span>
+            </div>
+          </div>
+        )}
       </SectionCard>
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function StatCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-2.5">
-      <p className="text-xs text-slate-400">{label}</p>
-      <p className="font-semibold text-slate-100">{value}</p>
+    <div className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-3 text-center">
+      <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
+      <p className={`text-xl font-black ${highlight ? "text-amber-300" : "text-white"}`}>{value}</p>
     </div>
   );
 }

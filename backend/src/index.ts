@@ -12,6 +12,7 @@ import scheduleRoutes from "./routes/schedule.routes";
 import venuesRoutes from "./routes/venues.routes";
 import { StatsService } from "./services/stats.service";
 import { cricketApiService } from "./services/cricket-api.service";
+import { cricApiDataService } from "./services/cricapi-data.service";
 
 dotenv.config();
 
@@ -23,7 +24,13 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "ipl-backend", timestamp: new Date().toISOString() });
+  res.json({
+    ok: true,
+    service: "ipl-backend",
+    timestamp: new Date().toISOString(),
+    cricApiConfigured: cricApiDataService.configured,
+    hitsInfo: cricApiDataService.getHitsInfo(),
+  });
 });
 
 app.use("/api/matches", matchesRoutes);
@@ -39,29 +46,28 @@ app.get("/api/points-table/:season", async (_req, res) => {
   res.json({ ok: true, data: table });
 });
 
-app.get("/api/stats/h2h/:team1/:team2", (req, res) => {
+app.get("/api/stats/h2h/:team1/:team2", async (req, res) => {
+  const completed = await cricApiDataService.getCompleted();
+  const t1 = req.params.team1.toLowerCase();
+  const t2 = req.params.team2.toLowerCase();
+  const relevant = completed.filter((m) => {
+    const teams = m.teams.map((t) => t.toLowerCase());
+    return teams.some((t) => t.includes(t1)) && teams.some((t) => t.includes(t2));
+  });
   res.json({
     ok: true,
     data: {
       team1: req.params.team1,
       team2: req.params.team2,
-      record: "15-12",
-      lastMet: "2026-03-20",
-      venue: "Wankhede Stadium",
+      matchesThisSeason: relevant.length,
+      results: relevant.map((m) => ({ name: m.name, status: m.status, date: m.date, venue: m.venue })),
     },
   });
 });
 
-app.get("/api/stats/records", (_req, res) => {
-  res.json({
-    ok: true,
-    data: {
-      highestScore: "Chris Gayle – 175* (RCB vs PWI, 2013)",
-      mostRuns: "Virat Kohli – 7,579",
-      mostWickets: "Yuzvendra Chahal – 205",
-      bestBowling: "Alzarri Joseph – 6/12",
-    },
-  });
+app.get("/api/stats/records", async (_req, res) => {
+  const records = await statsService.getRecords();
+  res.json({ ok: true, data: records });
 });
 
 const server = createServer(app);
@@ -92,8 +98,6 @@ setInterval(() => {
 }, pollMs);
 
 server.listen(port, () => {
-  // eslint-disable-next-line no-console
   console.log(`Backend API running on http://localhost:${port}`);
-  // eslint-disable-next-line no-console
   console.log(`Live feed poll: every ${pollMs}ms | CricAPI: ${process.env.CRICAPI_API_KEY ? "enabled" : "disabled (mock)"}`);
 });

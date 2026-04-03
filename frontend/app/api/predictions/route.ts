@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
-import { liveMatch, winTimeline } from "@/lib/mock-data";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    data: {
-      matchId: liveMatch.id,
-      teamA: liveMatch.teamA,
-      teamB: liveMatch.teamB,
-      timeline: winTimeline,
-    },
-    source: "mock",
-    timestamp: new Date().toISOString(),
-  });
+  try {
+    const res = await fetch(`${getBackendUrl()}/api/predictions`, { cache: "no-store" });
+    const json = await res.json();
+    return NextResponse.json(json);
+  } catch {
+    return NextResponse.json({ ok: false, error: "Backend unreachable" }, { status: 502 });
+  }
 }

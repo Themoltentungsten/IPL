@@ -14,4 +14,9 @@ router.get("/leaders", async (_req, res) => {
   res.json({ ok: true, data: leaders });
 });
 
+router.get("/records", async (_req, res) => {
+  const records = await statsService.getRecords();
+  res.json({ ok: true, data: records });
+});
+
 export default router;
